@@ -12,9 +12,9 @@ import modelnet
 #################### Settings ##############################
 num_epochs = 1000
 batch_size = 64
-downsample = 10    #For 5000 points use 2, for 1000 use 10, for 100 use 100
-network_dim = 256  #For 5000 points use 512, for 1000 use 256, for 100 use 256
-num_repeats = 5    #Number of times to repeat the experiment
+downsample = 2    #For 5000 points use 2, for 1000 use 10, for 100 use 100
+network_dim = 512  #For 5000 points use 512, for 1000 use 256, for 100 use 256
+num_repeats = 10    #Number of times to repeat the experiment
 data_path = 'ModelNet40_cloud.h5'
 #################### Settings ##############################
 
@@ -45,8 +45,8 @@ class PointCloudTrainer(object):
                 self.optimizer.zero_grad()
                 f_X = self.D(X)
                 loss = self.L(f_X, Y)
-                loss_val = loss.data.cpu().numpy()[0]
-                sum_acc += (f_X.max(dim=1)[1] == Y).float().sum().data.cpu().numpy()[0]
+                loss_val = loss.data.cpu().item()
+                sum_acc += (f_X.max(dim=1)[1] == Y).float().sum().data.cpu().item()
                 train_data.set_description('Train loss: {0:.4f}'.format(loss_val))
                 loss.backward()
                 classifier.clip_grad(self.D, 5)
@@ -66,7 +66,7 @@ class PointCloudTrainer(object):
             X = Variable(torch.cuda.FloatTensor(x))
             Y = Variable(torch.cuda.LongTensor(y))
             f_X = self.D(X)
-            sum_acc += (f_X.max(dim=1)[1] == Y).float().sum().data.cpu().numpy()[0]
+            sum_acc += (f_X.max(dim=1)[1] == Y).float().sum().data.cpu().item()
             del X,Y,f_X
         test_acc = sum_acc/counts
         print('Final Test Accuracy: {0:0.3f}'.format(test_acc))
@@ -74,10 +74,11 @@ class PointCloudTrainer(object):
 
 if __name__ == "__main__":
     test_accs = []
-    for i in range(num_repeats):
+    for i in range(8, num_repeats):
         print('='*30 + ' Start Run {0}/{1} '.format(i+1, num_repeats) + '='*30)
         t = PointCloudTrainer()
         t.train()
+        torch.save(t.D.state_dict(), 'model_' + str(i+1) + '.pt')
         acc = t.test()
         test_accs.append(acc)
         print('='*30 + ' Finish Run {0}/{1} '.format(i+1, num_repeats) + '='*30)
