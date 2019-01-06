@@ -80,7 +80,8 @@ class PointCloudTrainer(object):
             del X,Y,f_X
         test_acc = sum_acc/counts
         print('Final Test Accuracy: {0:0.3f}'.format(test_acc))
-        print('Final eval time of one batch: {0:0.9f}'.format(total_time / (total_batches - 1)))
+        print('mean evaluation time of one batch: {0:0.9f}'.format(total_time / (total_batches - 1)))
+        print ('parameter number', sum(p.numel() for p in t.D.parameters() if p.requires_grad))
         return test_acc
 
 if __name__ == "__main__":
