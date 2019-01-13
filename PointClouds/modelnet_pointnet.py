@@ -8,6 +8,7 @@ try:
 except:
     from tqdm import tqdm
 import h5py
+import defines as df
 
 
 def rotate_z(theta, x):
@@ -43,7 +44,77 @@ def standardize(x):
 
 
 class ModelFetcher(object):
-    def __init__(self, fname, batch_size, down_sample=10, do_standardize=True, do_augmentation=False):
+    
+    @staticmethod
+    def _get_filenames(filepath):
+        """
+        Get listed filenames listed in the file.
+
+        Args:
+            filepath (str): Path to the file containing other files as the following lines.
+        """
+        with open(filepath) as f:
+            content = f.readlines()
+        return [x.strip() for x in content]
+    
+    @staticmethod
+    def _load_h5_file(filepath):
+        """
+        Load modelnet data from h5 file.
+
+        Args:
+            filepath (str): Path to the modelnet h5 file.
+        """
+        f = h5py.File(filepath)
+        data = f['data'][:]
+        label = f['label'][:]
+        return (data, label)
+    
+    def __init__(self, fname, batch_size, pointcloud_size=1000, do_standardize=True, do_augmentation=False):
+        
+        # download data if it's needed
+        if not os.path.exists(df.DATA_MODELNET_DIR):
+            zipfile = os.path.basename(df.DATA_URL)
+            os.system('wget %s; unzip %s' % (df.DATA_URL, zipfile))
+            os.system('mv %s %s' % (zipfile[:-4], df.DATA_DIR))
+            os.system('rm %s' % (zipfile))
+            print("Modelnet database downloading completed...")
+
+        #######################################################################
+        # load train data
+        #######################################################################
+        
+        train_files = [os.path.join(df.ROOT_DIR, elem) for elem in ModelFetcher._get_filenames(os.path.join(df.DATA_MODELNET_DIR, "train_files.txt"))]
+        train_data = [ModelFetcher._load_h5_file(train_file) for train_file in train_files]
+        pointclouds_train, labels_train = zip(*train_data)
+        self.pointclouds_train = np.concatenate(pointclouds_train, axis=0)
+        self.labels_train = np.concatenate(labels_train, axis=0)
+        
+        #######################################################################
+        # load test data
+        #######################################################################
+        
+        test_files = [os.path.join(df.ROOT_DIR, elem) for elem in ModelFetcher._get_filenames(os.path.join(df.DATA_MODELNET_DIR, "test_files.txt"))]
+        test_data = [ModelFetcher._load_h5_file(test_file) for test_file in test_files]
+        pointclouds_test, labels_test = zip(*test_data)
+        self.pointclouds_test = np.concatenate(pointclouds_test, axis=0)
+        self.labels_test = np.concatenate(labels_test, axis=0)
+        
+        #######################################################################
+        # Internal help variables
+        #######################################################################
+        
+        self.CLASSES_COUNT = 40
+        self.pointcloud_size = pointcloud_size
+        with open(df.CLASS_NAMES_FILE) as f:
+            self.class_names = f.readlines()
+        self.class_names = [class_name.strip() for class_name in self.class_names]
+        
+        return
+        
+        #######################################################################
+        # Other stuff
+        #######################################################################
 
         self.fname = fname
         self.batch_size = batch_size
