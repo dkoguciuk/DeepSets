@@ -3,4 +3,7 @@ PointClouds/.ipynb_checkpoints/
 PointClouds/ModelNet40_cloud.h5
 PointClouds/__pycache__/
 PointClouds/*.npy
-
+*.pyc
+.project
+.pydevproject
+.settings/
