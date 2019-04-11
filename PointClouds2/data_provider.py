@@ -953,7 +953,7 @@ class ModelNet40Downsampled(GenericDataset) :
     Class implementing all needed functionality with ModelNet40Downsampled data manipulation.
     """
     
-    def __init__(self, pointcloud_size, distance_metric='', pointnet_base=''):
+    def __init__(self, pointcloud_size, distance_metric, pointnet_base=''):
         """
         Default constructor, where the check for modelnet files is performed and if there
         is no needed files, we would download them directly form the stanford website.
@@ -970,10 +970,8 @@ class ModelNet40Downsampled(GenericDataset) :
         # load train data
         #######################################################################
         
-        filename = 'train_' + str(pointcloud_size) + '.hdf5'
-        if distance_metric != '':
-            filename = distance_metric + '_' + filename
-        print ('Training on:', filename)
+        filename = 'train' + str(pointcloud_size) + '_' + distance_metric + '.hdf5'
+        print ('Training on:', os.path.join(df.DATA_MODELNET40_SAMPLED_DIR + pointnet_base, filename))
         f = h5py.File(os.path.join(df.DATA_MODELNET40_SAMPLED_DIR + pointnet_base, filename), 'r')
         self.pointclouds_train = np.array(f['train_cloud'])
         self.labels_train = np.array(f['train_labels'])
@@ -982,10 +980,8 @@ class ModelNet40Downsampled(GenericDataset) :
         # load test data
         #######################################################################
         
-        filename = 'test_' + str(pointcloud_size) + '.hdf5'
-        if distance_metric != '':
-            filename = distance_metric + '_' + filename
-        print ('Testing on:', filename)
+        filename = 'test' + str(pointcloud_size) + '_' + distance_metric + '.hdf5'
+        print ('Testing on:', os.path.join(df.DATA_MODELNET40_SAMPLED_DIR + pointnet_base, filename))
         f = h5py.File(os.path.join(df.DATA_MODELNET40_SAMPLED_DIR + pointnet_base, filename), 'r')
         self.pointclouds_test = np.array(f['test_cloud'])
         self.labels_test = np.array(f['test_labels'])
